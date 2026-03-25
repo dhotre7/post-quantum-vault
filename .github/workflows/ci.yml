@@ -1,0 +1,38 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev ninja-build
+        git clone -b 0.15.0 https://github.com/open-quantum-safe/liboqs.git
+        cd liboqs
+        mkdir build && cd build
+        cmake -GNinja -DBUILD_SHARED_LIBS=ON ..
+        ninja
+        sudo ninja install
+        sudo ldconfig
+
+    - name: Compile Vault & Tests
+      run: make all
+
+    - name: Run Crypto Linker Test
+      run: ./test_crypto
+
+    - name: Run Vault Roundtrip & Tamper Test
+      run: ./test_roundtrip
+
+    - name: Static Syntax Analysis Check
+      run: gcc -Wall -Wextra -Werror -fsyntax-only src/*.c tests/*.c

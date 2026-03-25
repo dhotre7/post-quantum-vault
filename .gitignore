@@ -1,0 +1,19 @@
+# Compiled Binaries
+vault
+test_crypto
+test_roundtrip
+test_bench
+*.o
+
+# Cryptographic Keys & Output Files
+*.pk
+*.sk
+*.vault
+*.decrypted
+test*
+hacked_out.txt
+
+# OS and IDE files
+.DS_Store
+.vscode/
+.idea/

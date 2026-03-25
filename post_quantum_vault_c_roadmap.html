@@ -1,0 +1,342 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.roadmap { padding: 1.5rem 0; }
+.phase-row { display: flex; gap: 0; }
+.phase-spine { display: flex; flex-direction: column; align-items: center; width: 48px; flex-shrink: 0; }
+.phase-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; z-index: 2; }
+.phase-line { width: 2px; flex: 1; min-height: 16px; opacity: 0.4; }
+.phase-content { flex: 1; padding: 0 0 2rem 12px; }
+.phase-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; cursor: pointer; user-select: none; }
+.phase-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+.phase-duration { font-size: 12px; color: var(--color-text-secondary); }
+.phase-toggle { font-size: 11px; color: var(--color-text-tertiary); margin-left: auto; transition: transform 0.25s; display: inline-block; }
+.phase-toggle.open { transform: rotate(90deg); }
+.phase-body { overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s; }
+.phase-body.collapsed { max-height: 0 !important; opacity: 0; }
+.phase-desc { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 12px; }
+.tasks { display: flex; flex-direction: column; gap: 8px; }
+.task { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 8px; padding: 10px 12px; }
+.task-top { display: flex; align-items: center; gap: 8px; }
+.task-icon { width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.task-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.task-sub { font-size: 12px; color: var(--color-text-secondary); line-height: 1.6; margin-top: 5px; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 0.5px solid; font-family: var(--font-mono); }
+.outcome { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: 8px; padding: 10px 14px; margin-top: 10px; }
+.outcome-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: 0.05em; margin-bottom: 4px; }
+.outcome-text { font-size: 13px; color: var(--color-text-primary); line-height: 1.5; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 1.5rem; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--color-text-secondary); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+.warn-box { background: #FAEEDA; border: 0.5px solid #EF9F27; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; font-size: 12px; color: #633806; line-height: 1.55; }
+.code-pill { font-family: var(--font-mono); font-size: 11px; background: var(--color-background-tertiary); border: 0.5px solid var(--color-border-tertiary); border-radius: 4px; padding: 1px 5px; color: var(--color-text-primary); }
+
+.p1-dot  { background: #CECBF6; color: #3C3489; }
+.p1-line { background: #CECBF6; }
+.p1-icon { background: #EEEDFE; color: #3C3489; }
+.p1-tag  { background: #EEEDFE; color: #534AB7; border-color: #AFA9EC; }
+
+.p2-dot  { background: #9FE1CB; color: #085041; }
+.p2-line { background: #9FE1CB; }
+.p2-icon { background: #E1F5EE; color: #085041; }
+.p2-tag  { background: #E1F5EE; color: #0F6E56; border-color: #5DCAA5; }
+
+.p3-dot  { background: #FAC775; color: #633806; }
+.p3-line { background: #FAC775; }
+.p3-icon { background: #FAEEDA; color: #633806; }
+.p3-tag  { background: #FAEEDA; color: #854F0B; border-color: #EF9F27; }
+
+.p4-dot  { background: #F5C4B3; color: #4A1B0C; }
+.p4-line { background: #F5C4B3; }
+.p4-icon { background: #FAECE7; color: #4A1B0C; }
+.p4-tag  { background: #FAECE7; color: #993C1D; border-color: #F0997B; }
+
+.p5-dot  { background: #B5D4F4; color: #042C53; }
+.p5-line { background: #B5D4F4; }
+.p5-icon { background: #E6F1FB; color: #042C53; }
+.p5-tag  { background: #E6F1FB; color: #185FA5; border-color: #85B7EB; }
+</style>
+
+<div class="roadmap">
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#CECBF6"></div>Setup & foundations</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9FE1CB"></div>Core crypto engine</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FAC775"></div>CLI tool</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F5C4B3"></div>Security hardening</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#B5D4F4"></div>Polish & ship</div>
+  </div>
+  <div id="phases"></div>
+</div>
+
+<script>
+const phases = [
+  {
+    id: 1, cls: "p1",
+    title: "Phase 1 — Setup & foundations",
+    duration: "Weeks 1–2",
+    desc: "Your goal is to install both libraries, get a working build system, and understand the exact API calls you'll use before writing any vault logic.",
+    warn: null,
+    tasks: [
+      {
+        name: "Install OpenSSL dev headers",
+        icon: "🔒",
+        sub: "OpenSSL handles AES-256-GCM. Install the development package so you get the headers and static/shared libraries. You'll use the EVP (envelope) API — the high-level interface that handles nonces, auth tags, and padding for you.",
+        tags: ["sudo apt install libssl-dev", "openssl/evp.h", "EVP_aead_aes_256_gcm"]
+      },
+      {
+        name: "Build and install liboqs from source",
+        icon: "⚛️",
+        sub: "liboqs is the C library for ML-KEM (post-quantum). It's not in apt — you build it with cmake. Clone it, run cmake + make + sudo make install. This puts oqs.h in your include path and liboqs.a/.so in your lib path. Current version is 0.15.0.",
+        tags: ["git clone open-quantum-safe/liboqs", "cmake -DBUILD_SHARED_LIBS=ON ..", "oqs/oqs.h"]
+      },
+      {
+        name: "Write a Hello Crypto test",
+        icon: "🧪",
+        sub: "Before building anything, write a 30-line test.c that calls OQS_KEM_new(\"ML-KEM-768\") and prints the key sizes. Compile it and confirm it links correctly. This proves your build environment works before you write real code.",
+        tags: ["OQS_KEM_new()", "gcc test.c -loqs -lssl -lcrypto", "Linker test"]
+      },
+      {
+        name: "Set up your project structure",
+        icon: "📁",
+        sub: "Create the folder layout: src/ for .c files, include/ for your .h headers, tests/ for test programs, and a Makefile or CMakeLists.txt to build everything. A clean structure matters for a portfolio project.",
+        tags: ["Makefile", "src/ include/ tests/", "vault.h interface"]
+      },
+      {
+        name: "Study the liboqs KEM API (30 min)",
+        icon: "📖",
+        sub: "Read the liboqs KEM API — it has only 5 functions you need: OQS_KEM_new, keypair, encaps, decaps, free. The key sizes for ML-KEM-768 are fixed: public key 1184 bytes, secret key 2400 bytes, ciphertext 1088 bytes, shared secret 32 bytes.",
+        tags: ["ML-KEM-768", "pk=1184B  sk=2400B", "ct=1088B  ss=32B"]
+      },
+      {
+        name: "Study OpenSSL EVP AES-GCM API (30 min)",
+        icon: "📖",
+        sub: "Read how EVP_EncryptInit_ex, EVP_EncryptUpdate, and EVP_EncryptFinal_ex work for AES-256-GCM. Note that GCM produces a 16-byte authentication tag that must be saved and verified on decrypt. This tag prevents tampering.",
+        tags: ["EVP_EncryptInit_ex()", "EVP_CTRL_GCM_GET_TAG", "16-byte auth tag"]
+      }
+    ],
+    outcome: "Both libraries are installed and linking. You can call OQS_KEM_new() and print key sizes. Your project folder structure exists. You understand the 5 API functions you'll use."
+  },
+  {
+    id: 2, cls: "p2",
+    title: "Phase 2 — Core crypto engine",
+    duration: "Weeks 3–5",
+    desc: "Build vault.c — the heart of the project. This is a library of functions that encrypts and decrypts files using the hybrid ML-KEM + AES-256-GCM pipeline. No CLI yet — just the core logic, built and tested in isolation.",
+    warn: "C has no automatic memory management. Every malloc needs a matching free. Every secret key buffer needs to be explicitly zeroed with explicit_bzero() before freeing. Missing this is the most common security bug in C crypto code.",
+    tasks: [
+      {
+        name: "Design your vault file format",
+        icon: "📐",
+        sub: "Define exactly what bytes go in a .vault file: [4-byte magic header 'VAULT'] [1-byte version] [1088-byte KEM ciphertext] [12-byte AES nonce] [16-byte GCM auth tag] [4-byte plaintext length] [N-byte AES ciphertext]. Write this in a comment at the top of vault.h before coding.",
+        tags: ["Magic: 0x56 0x41 0x55 0x4C", "Fixed-size header", "Binary format"]
+      },
+      {
+        name: "vault_keygen() — generate ML-KEM keypair",
+        icon: "🔑",
+        sub: "Call OQS_KEM_new(\"ML-KEM-768\"), then OQS_KEM_keypair(kem, public_key, secret_key). Write public key to a .pk file, secret key to a .sk file using fwrite(). These are raw bytes — no base64 needed for now.",
+        tags: ["OQS_KEM_keypair()", "fwrite() raw bytes", "vault_keygen.c"]
+      },
+      {
+        name: "vault_seal() — encrypt a file",
+        icon: "🔐",
+        sub: "Step 1: Load public key from .pk file. Step 2: Call OQS_KEM_encaps() → get 32-byte shared_secret + 1088-byte kem_ciphertext. Step 3: Generate 12-byte random nonce using RAND_bytes(). Step 4: AES-256-GCM encrypt the file using shared_secret as the key. Step 5: Write vault header + all components to .vault file.",
+        tags: ["OQS_KEM_encaps()", "RAND_bytes() nonce", "EVP_EncryptInit_ex()"]
+      },
+      {
+        name: "vault_open() — decrypt a file",
+        icon: "🔓",
+        sub: "Step 1: Parse vault header — check magic bytes, read kem_ciphertext + nonce + auth_tag. Step 2: Load secret key from .sk file. Step 3: Call OQS_KEM_decaps() → recover shared_secret. Step 4: AES-256-GCM decrypt using shared_secret. Step 5: Verify auth tag — if it fails, abort immediately.",
+        tags: ["OQS_KEM_decaps()", "EVP_CTRL_GCM_SET_TAG", "Auth tag verify"]
+      },
+      {
+        name: "Memory management discipline",
+        icon: "🧹",
+        sub: "After every use of shared_secret or secret_key buffers, call explicit_bzero(buf, len) before free(). Unlike memset(), the compiler cannot optimize explicit_bzero() away. Also check every malloc() return value — NULL means out of memory.",
+        tags: ["explicit_bzero()", "explicit_bzero() not memset()", "Check NULL returns"]
+      },
+      {
+        name: "Write round-trip tests",
+        icon: "🧪",
+        sub: "In tests/test_roundtrip.c: generate a keypair, seal a test file, open it, compare bytes. Test with: an empty file, a 1-byte file, a 10MB file, and a file with random binary data. Test that a corrupted vault file is rejected (flip one bit in the auth tag — open() must return an error).",
+        tags: ["memcmp() byte check", "Corruption test", "Valgrind for leaks"]
+      }
+    ],
+    outcome: "vault.c compiles cleanly. Round-trip tests pass for all file sizes. Valgrind shows zero memory leaks. The crypto pipeline is correct and tested before the CLI exists."
+  },
+  {
+    id: 3, cls: "p3",
+    title: "Phase 3 — CLI tool",
+    duration: "Weeks 6–7",
+    desc: "Wrap vault.c in a user-facing command-line interface. In C, argument parsing is manual — no magic framework. Use argc/argv directly or the lightweight argparse pattern. Keep main.c thin; all logic stays in vault.c.",
+    warn: null,
+    tasks: [
+      {
+        name: "Design the CLI interface",
+        icon: "⌨️",
+        sub: "Three subcommands: 'vault keygen --out mykey' generates a keypair. 'vault seal --key mykey.pk secret.pdf' creates secret.pdf.vault. 'vault open --key mykey.sk secret.pdf.vault' recovers secret.pdf. Decide this on paper before coding.",
+        tags: ["vault keygen", "vault seal --key", "vault open --key"]
+      },
+      {
+        name: "Parse argc/argv in main.c",
+        icon: "📋",
+        sub: "Use strcmp() to identify the subcommand, then loop through remaining args for flags like --key and --out. Validate all inputs: does the key file exist? Is the input file readable? Print usage and exit(1) on bad args — never silently proceed.",
+        tags: ["strcmp(argv[1],...)", "fopen() check", "print_usage()"]
+      },
+      {
+        name: "Wire up vault keygen",
+        icon: "🗝️",
+        sub: "Call vault_keygen() and write two files: basename.pk (public key) and basename.sk (secret key). Print 'Generated keypair: mykey.pk / mykey.sk'. Warn the user: 'KEEP mykey.sk SAFE — losing it means losing your encrypted files forever.'",
+        tags: ["vault_keygen()", "Warning message", "File naming"]
+      },
+      {
+        name: "Wire up vault seal and open",
+        icon: "📦",
+        sub: "Call vault_seal(pk_path, input_path, output_path) and vault_open(sk_path, input_path, output_path). Print file sizes before and after encryption. For seal, print the output .vault filename. For open, print where the decrypted file was written.",
+        tags: ["vault_seal()", "vault_open()", "stat() for file size"]
+      },
+      {
+        name: "Handle errors gracefully",
+        icon: "⚠️",
+        sub: "Never let the program crash with a segfault or garbage output. Every error path must print a clear message to stderr and exit with a non-zero code. E.g. 'Error: wrong key — decryption failed' not a silent empty file. Use fprintf(stderr, ...) for errors.",
+        tags: ["fprintf(stderr,...)", "exit(EXIT_FAILURE)", "Meaningful errors"]
+      }
+    ],
+    outcome: "A fully working CLI binary. You can keygen, seal a file, open it, and get the original bytes back. Error cases print clear messages. A classmate could use it from just the --help output."
+  },
+  {
+    id: 4, cls: "p4",
+    title: "Phase 4 — Security hardening",
+    duration: "Week 8",
+    desc: "Working code and secure code are different things. This phase fixes the issues that would make a security engineer raise red flags in a code review.",
+    warn: "Run Valgrind on every test case in this phase. Crypto bugs often appear as memory errors. 'valgrind --leak-check=full ./vault seal ...' should show zero errors before you move on.",
+    tasks: [
+      {
+        name: "Never reuse a nonce",
+        icon: "🚫",
+        sub: "AES-256-GCM is catastrophically broken if you encrypt two different files with the same key AND same nonce. Since you call RAND_bytes() for a fresh nonce every seal() call, and derive a fresh shared_secret from ML-KEM every time, this is already handled — but add a comment explaining why, so reviewers know it was intentional.",
+        tags: ["RAND_bytes() per seal", "Fresh KEM each time", "Document the why"]
+      },
+      {
+        name: "Validate vault file on open",
+        icon: "🛡️",
+        sub: "Before trusting any bytes from a .vault file, check: magic header matches, version byte is known, file is at least minimum size (header + ciphertext). Reject files that fail any check before attempting decryption. This prevents crashes on malformed input.",
+        tags: ["Magic byte check", "Minimum size check", "Fail before decrypt"]
+      },
+      {
+        name: "Use explicit_bzero() everywhere",
+        icon: "🧹",
+        sub: "Audit every function for stack and heap buffers that hold secret_key or shared_secret. Add explicit_bzero(buf, size) before every free() and at the end of functions where secrets are on the stack. The compiler cannot remove explicit_bzero — unlike memset().",
+        tags: ["explicit_bzero(sk,...)", "Stack secrets too", "Audit all paths"]
+      },
+      {
+        name: "Check all return values",
+        icon: "✅",
+        sub: "In C, ignoring a return value is legal but dangerous. Check the return of every OQS_KEM_* call, every EVP_* call, every fread/fwrite. A failed fwrite that silently truncates your vault file is a data loss bug. Use OQS_SUCCESS and EVP_SUCCESS constants.",
+        tags: ["OQS_SUCCESS check", "EVP return codes", "fwrite() size check"]
+      },
+      {
+        name: "Write a SECURITY.md",
+        icon: "📋",
+        sub: "Document: algorithm choices (ML-KEM-768 + AES-256-GCM), why hybrid (quantum-safe key wrapping + proven symmetric encryption), what the tool protects against (harvest-now-decrypt-later), and what it does NOT protect (file metadata, filenames, timing attacks, physical access).",
+        tags: ["Threat model", "Algorithm rationale", "Known limitations"]
+      }
+    ],
+    outcome: "Valgrind shows zero leaks. All return values are checked. Secret buffers are zeroed. The SECURITY.md explains your design decisions clearly."
+  },
+  {
+    id: 5, cls: "p5",
+    title: "Phase 5 — Polish & ship",
+    duration: "Weeks 9–10",
+    desc: "Turn a working tool into a standout portfolio project. The code is done — now make sure the world can see and understand it.",
+    warn: null,
+    tasks: [
+      {
+        name: "Write a strong README.md",
+        icon: "📝",
+        sub: "Sections: (1) What it does and why it matters — explain harvest-now-decrypt-later in 3 sentences. (2) Build instructions: apt dependencies + liboqs build steps. (3) Usage with exact commands and example output. (4) Architecture: describe the hybrid pipeline. (5) Algorithm choices with sizes (ML-KEM-768 key sizes).",
+        tags: ["Build instructions", "Usage examples", "Architecture section"]
+      },
+      {
+        name: "Add a benchmark program",
+        icon: "⚡",
+        sub: "Write bench.c that runs vault_seal() 100 times on a 1MB file and prints average time using clock_gettime(CLOCK_MONOTONIC). Compare ML-KEM keygen vs RSA-2048 keygen using OpenSSL's RSA API. These numbers are impressive: ML-KEM is faster AND quantum-safe.",
+        tags: ["clock_gettime()", "100 iterations", "ML-KEM vs RSA timing"]
+      },
+      {
+        name: "Set up GitHub CI with a Makefile",
+        icon: "🔁",
+        sub: "Write a GitHub Actions workflow that installs liboqs, builds the project, and runs your test suite on every push. A green CI badge on your README signals professionalism. Use ubuntu-latest — it matches your dev environment.",
+        tags: ["GitHub Actions", ".github/workflows/", "ubuntu-latest runner"]
+      },
+      {
+        name: "Run static analysis",
+        icon: "🔍",
+        sub: "Run clang --analyze or cppcheck on your source. Fix any warnings. Static analysis finds pointer issues, use-after-free, and uninitialized reads that your tests might miss. Zero warnings from a static analyzer is a strong signal.",
+        tags: ["clang --analyze", "cppcheck", "Zero warnings target"]
+      },
+      {
+        name: "Write a blog post or demo",
+        icon: "✍️",
+        sub: "Write a 500-word post: 'I built a post-quantum hybrid vault in C — here is how it works.' Show the vault file format diagram, the 5-step encryption pipeline, and the benchmark results. Post it on dev.to or your GitHub Pages. This is a conversation-starter in any security interview.",
+        tags: ["dev.to or GitHub Pages", "Technical writing", "Interview talking point"]
+      }
+    ],
+    outcome: "A polished GitHub repo with CI, benchmarks, zero static analysis warnings, and a published blog post. This project alone can anchor your resume for systems security roles."
+  }
+];
+
+function renderPhase(p) {
+  const bodyId = `body-${p.id}`;
+  const toggleId = `toggle-${p.id}`;
+  const warnHtml = p.warn ? `<div class="warn-box">⚠ ${p.warn}</div>` : '';
+  return `
+  <div class="phase-row">
+    <div class="phase-spine">
+      <div class="phase-dot ${p.cls}-dot">${p.id}</div>
+      <div class="phase-line ${p.cls}-line"${p.id === 5 ? ' style="display:none"' : ''}></div>
+    </div>
+    <div class="phase-content">
+      <div class="phase-header" onclick="toggle(${p.id})">
+        <span class="phase-title">${p.title}</span>
+        <span class="phase-duration">${p.duration}</span>
+        <span class="phase-toggle open" id="${toggleId}">▶</span>
+      </div>
+      <div class="phase-body" id="${bodyId}">
+        ${warnHtml}
+        <p class="phase-desc">${p.desc}</p>
+        <div class="tasks">
+          ${p.tasks.map(t => `
+          <div class="task">
+            <div class="task-top">
+              <div class="task-icon ${p.cls}-icon">${t.icon}</div>
+              <span class="task-name">${t.name}</span>
+            </div>
+            <div class="task-sub">${t.sub}</div>
+            <div class="tags">${t.tags.map(tag => `<span class="tag ${p.cls}-tag">${tag}</span>`).join('')}</div>
+          </div>`).join('')}
+        </div>
+        <div class="outcome">
+          <div class="outcome-label">DELIVERABLE</div>
+          <div class="outcome-text">${p.outcome}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+document.getElementById('phases').innerHTML = phases.map(renderPhase).join('');
+phases.forEach(p => {
+  const el = document.getElementById(`body-${p.id}`);
+  el.style.maxHeight = el.scrollHeight + 'px';
+});
+function toggle(id) {
+  const body = document.getElementById(`body-${id}`);
+  const tog = document.getElementById(`toggle-${id}`);
+  const open = !body.classList.contains('collapsed');
+  if (open) {
+    body.style.maxHeight = '0'; body.classList.add('collapsed'); tog.classList.remove('open');
+  } else {
+    body.classList.remove('collapsed'); body.style.maxHeight = body.scrollHeight + 'px'; tog.classList.add('open');
+  }
+}
+</script>
