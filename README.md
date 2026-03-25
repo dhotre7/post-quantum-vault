@@ -32,6 +32,11 @@ make vault
 # 1. Generate Post-Quantum Keys (Creates mykey.pk & mykey.sk)
 ./vault keygen --out mykey
 
+
+#### 4. Personal Message
+   Guys it took so much effort from my side i took this project because when i first read about it in a reddit post it quickly grabbed my attention and i reasearched about it and thought of making this project also for  many part of code i took help from ai and also thank you to MIT for letting me use their ML-Kem algorithm for this project . thank you
+
+
 # 2. Encrypt a File
 ./vault seal --key mykey.pk secret_document.pdf
 
